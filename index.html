@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contecksh Level List</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Rajdhani', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .display-font {
+            font-family: 'Rajdhani', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-rose-500 selection:text-white">
+
+    <!-- Header Section -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 py-6 text-center">
+            <h1 class="display-font">
+                Contecksh Level List
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">All of our hardest verifications and layout progress. Mainlist is top 10, extended list is top 25, and the WIP/Unbeaten tab is endless.</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="max-w-2xl mx-auto px-4 pb-4">
+            <div class="flex rounded-xl bg-slate-900 p-1.5 border border-slate-800 shadow-inner">
+                <button onclick="switchTab('beaten')" id="tab-beaten" class="flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md shadow-rose-900/30">
+                    <i class="fa-solid fa-trophy text-rose-200"></i> Verified Levels
+                </button>
+                <button onclick="switchTab('unbeaten')" id="tab-unbeaten" class="flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+                    <i class="fa-solid fa-skull text-indigo-400"></i> Unbeaten Levels
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
+        
+        <!-- Search & Filter Bar -->
+        <div class="mb-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div class="relative w-full sm:w-72">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                    <i class="fa-solid fa-search"></i>
+                </span>
+                <input type="text" id="searchInput" oninput="filterLevels()" placeholder="Search levels or creators..." 
+                    class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors">
+            </div>
+            <div id="levelCount" class="text-xs text-slate-400 font-medium bg-slate-900 px-3 py-2 rounded-lg border border-slate-800">
+                Showing all levels
+            </div>
+        </div>
+
+        <!-- Levels List Container -->
+        <div id="levelsList" class="space-y-4">
+            <!-- Dynamically populated via JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16 px-4 bg-slate-900/40 border border-slate-800/80 rounded-2xl mt-4">
+            <div class="text-slate-600 text-5xl mb-3">
+                <i class="fa-regular fa-folder-open"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-300">No levels found</h3>
+            <p class="text-slate-500 text-sm mt-1">Try adjusting your search or switch tabs.</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900/60 border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+        <p>To submit a completion, send the clip (with clicks), as well as your attempt count, to AnderNewZealand.</p>
+    </footer>
+
+    <!-- Level Detail Modal -->
+    <div id="levelModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl transform scale-95 transition-transform duration-300" id="modalContainer">
+            
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between sticky top-0 bg-slate-900/95 backdrop-blur z-10">
+                <div class="flex items-center gap-3">
+                    <span id="modalRank" class="display-font text-xs font-bold px-2.5 py-1 rounded-md">#1</span>
+                    <h2 id="modalTitle" class="display-font text-2xl font-bold text-slate-100">Level Title</h2>
+                </div>
+                <button onclick="closeModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-6">
+                <!-- YouTube Embed Player -->
+                <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
+                    <iframe id="modalYoutube" class="w-full h-full" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/60 border border-slate-800/80 p-4 rounded-xl">
+                        <span class="text-xs text-slate-500 uppercase tracking-wider font-semibold block mb-1">Original Creator</span>
+                        <span id="modalPublisher" class="text-slate-200 font-medium text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-user-pen text-rose-500"></i> <span id="publisherText">Creator Name</span>
+                        </span>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800/80 p-4 rounded-xl">
+                        <span class="text-xs text-slate-500 uppercase tracking-wider font-semibold block mb-1">Difficulty</span>
+                        <span id="modalPoints" class="text-slate-200 font-medium text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-star text-amber-500"></i> <span id="pointsText">35.00 points</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Level Description</h3>
+                    <div id="modalDescription" class="bg-slate-950/60 border border-slate-800/80 p-4 rounded-xl text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+                        Level description goes here...
+                    </div>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- FRAME TIMINGS COUNT TABLE (EASY TO EDIT IN CODE)          -->
+                <!-- ========================================================= -->
+                <div id="frameTimingsSection" class="space-y-3 border-t border-slate-800 pt-6">
+                    <details class="group bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden">
+                        <summary class="p-4 cursor-pointer flex items-center justify-between select-none hover:bg-slate-900/50 transition-colors">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-stopwatch text-cyan-400"></i>
+                                <span class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Frame Windows</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span id="precisionValue" class="text-xs font-mono px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">
+                                    Precision: 0
+                                </span>
+                                <i class="fa-solid fa-chevron-down text-xs text-slate-400 group-open:rotate-180 transition-transform"></i>
+                            </div>
+                        </summary>
+                        <div class="p-4 pt-0 space-y-2 border-t border-slate-800/80 mt-2">
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">11-12 Frame</span>
+                                <span id="f-11_12" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">9-10 Frame</span>
+                                <span id="f-9_10" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">7-8 Frame</span>
+                                <span id="f-7_8" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">5-6 Frame</span>
+                                <span id="f-5_6" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">4 Frame</span>
+                                <span id="f-4" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">3 Frame</span>
+                                <span id="f-3" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">2 Frame</span>
+                                <span id="f-2" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg text-xs">
+                                <span class="text-slate-400 font-medium">1 Frame</span>
+                                <span id="f-1" class="font-mono font-bold text-slate-100">0</span>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- VICTORS & RECORDS SECTION (EASY TO EDIT IN CODE)          -->
+                <!-- ========================================================= -->
+                <div class="space-y-4 border-t border-slate-800 pt-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-amber-500"></i> Victor Leaderboard
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Verified completions and progress</p>
+                    </div>
+
+                    <!-- Victors Table Header & Rows -->
+                    <div class="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/60">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/90 uppercase text-[10px] font-bold tracking-wider text-slate-400 border-b border-slate-800">
+                                <tr>
+                                    <th scope="col" class="py-2.5 px-3">#</th>
+                                    <th scope="col" class="py-2.5 px-3">Victor Name</th>
+                                    <th scope="col" class="py-2.5 px-3">Progress / Attempts</th>
+                                    <th scope="col" class="py-2.5 px-3">Date</th>
+                                    <th scope="col" class="py-2.5 px-3 text-right">Proof</th>
+                                </tr>
+                            </thead>
+                            <tbody id="victorTableBody" class="divide-y divide-slate-800/50 font-medium">
+                                <!-- Dynamically populated via JS and easily editable in code array -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-end">
+                <button onclick="closeModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Data Configuration & App Logic -->
+    <script>
+        /**
+         * =========================================================================
+         * DEVELOPER EDITING GUIDE (THUMBNAILS, TIMINGS, VICTORS)
+         * =========================================================================
+         * 
+         * To add/edit a level, modify or add objects inside `beatenLevels` or `unbeatenLevels`:
+         * 
+         *  {
+         *      rank: 1,
+         *      title: "Level Name",
+         *      publisher: "Creator",
+         *      subtitle: "35.00 (76%) — 350.00 (100%) points",
+         *      thumbnail: "IMAGE_URL_HERE",
+         *      youtubeId: "YOUTUBE_VIDEO_ID_HERE",
+         *      description: "Level description text...",
+         * 
+         *      // PRECISION RAW NUMBER VALUE
+         *      precision: 42.5,
+         * 
+         *      // FRAME TIMINGS COUNTS (Edit numbers directly - omit `frameTimings` entirely to remove the section for a level)
+         *      frameTimings: {
+         *          "1": 3,      // 1 Frame
+         *          "2": 12,     // 2 Frame
+         *          "3": 25,     // 3 Frame
+         *          "4": 18,     // 4 Frame
+         *          "5_6": 10,   // 5-6 Frame
+         *          "7_8": 5,    // 7-8 Frame
+         *          "9_10": 2,   // 9-10 Frame
+         *          "11_12": 0   // 11-12 Frame
+         *      },
+         * 
+         *      // VICTORS LEADERBOARD
+         *      records: [
+         *          { player: "PlayerName", progress: "100%", attempts: "12,000", videoUrl: "https://...", date: "YYYY-MM-DD" }
+         *      ]
+         *  }
+         */
+
+        const beatenLevels = [
+            {
+                rank: 1,
+                title: "Easy Aeternus",
+                publisher: "Riot and more",
+                subtitle: "Insane - Easy Extreme Demon",
+                thumbnail: "https://i.ibb.co/S4PD8gpP/easyaeternus.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "What started as a difficult parody level to grind runs on became an incredible skill-boosting project; the gold standard leap of faith to extreme demon gameplay. Verified as a stepping stone from easy demon skill. (ID: 135324260)",
+                precision: 65.90,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 0,
+                    "4": 0,
+                    "5_6": 0,
+                    "7_8": 6,
+                    "9_10": 10,
+                    "11_12": 17
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "18,691", videoUrl: "-", date: "2026-05-1" },
+                    { player: "FishReign", progress: "85%"},
+                    { player: "NotAkoro", progress: "24%, 80-100%"},
+                ]
+            },
+            {
+                rank: 2,
+                title: "Purgatory",
+                publisher: "Dylan456",
+                subtitle: "Insane Demon",
+                thumbnail: "https://i.ibb.co/d0mD97R0/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Nerfed version of Ander's iconic impossible layout from 2022. A significant, skill-developing test for anyone brave enough to suffer through unforgiving chokepoints. (ID: 127836634)",
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "10,104", videoUrl: "-", date: "2026-04-12" },
+                    { player: "FishReign", progress: "100%", attempts: "?", videoUrl: "-", date: "?" },
+                ]
+            },
+                       {
+                rank: 3,
+                title: "woombwave",
+                publisher: "NotAkoro",
+                subtitle: "Hard Demon",
+                thumbnail: "https://i.ibb.co/pjFdhyBk/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "hard wave challenge. (ID: 131126886)",
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "3427", videoUrl: "-"},
+                    { player: "NotAkoro", progress: "100%", attempts: "2778", videoUrl: "-"},
+                ]
+            },
+                       {
+                rank: 4,
+                title: "Wavestep",
+                publisher: "RobTop",
+                subtitle: "Medium Demon",
+                thumbnail: "https://i.ibb.co/xKsW2Pdk/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "clubstep, but the entire level is the wave gamemode, with the addition of mandatory orb presses. the ultimate test of endurance. 2.5k atts :sob: (ID: 128864871)",
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "2506", videoUrl: "-"},
+                    { player: "NotAkoro", progress: "100%", attempts: "1188"},
+                ]
+            },
+                       {
+                rank: 5,
+                title: "Easy Zackari Von Trials",
+                publisher: "AnderNewZealand",
+                subtitle: "Medium Demon",
+                thumbnail: "https://i.ibb.co/ynPskFg7/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "The nerfed version of Zackari Von Trials, intended to be accessible to lesser-skilled players, though still very challenging. (ID: 151101187)",
+                precision: 79.74,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 0,
+                    "4": 1,
+                    "5_6": 4,
+                    "7_8": 21,
+                    "9_10": 8,
+                    "11_12": 3
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "1477", date: "2026-23-10", videoUrl: "-"},
+                ]
+            },
+                       {
+                rank: 6,
+                title: "Electrowave Adventures",
+                publisher: "RobTop",
+                subtitle: "Easy - Medium Demon",
+                thumbnail: "https://i.ibb.co/vx6kMckW/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "A stupid remake of electroman adventures, with wave, lots of wave. The most pointless and undeserving level on this list. Die. (ID: 128805215)",
+                precision: 0,
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "93", videoUrl: "-"},
+                ]
+            },
+                       {
+                rank: 7,
+                title: "CRANZAL",
+                publisher: "Dylan456",
+                subtitle: "Easy Demon",
+                thumbnail: "https://i.ibb.co/ksh2H1xf/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "You have been corrupted. (ID: 150960970)",
+                precision: 0,
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "484", videoUrl: "-"},
+                ]
+            },
+                       {
+                rank: 8,
+                title: "Bloody Angel",
+                publisher: "AnderNewZealand",
+                subtitle: "Easy Demon",
+                thumbnail: "https://i.ibb.co/C53nj5JZ/image.pngr",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "You cannot lose what you never gained. For Emma. (ID: 151549186)",
+                precision: 1,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 0,
+                    "4": 0,
+                    "5_6": 0,
+                    "7_8": 0,
+                    "9_10": 0,
+                    "11_12": 3
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "65", videoUrl: "-"},
+                    { player: "Vaetek", progress: "25%"},
+                ]
+            },
+                       {
+                rank: 9,
+                title: "Streamer Challenge",
+                publisher: "Dylan456",
+                subtitle: "Insane",
+                thumbnail: "https://i.ibb.co/G4CsysQZ/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "A level that child Ander would always send to streamers, but could never actually beat himself. (ID: 57721106)",
+                precision: 0,
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "141", videoUrl: "-"},
+                ]
+            },
+                       {
+                rank: 10,
+                title: "Sleep Paralysis",
+                publisher: "Dylan456",
+                subtitle: "Insane",
+                thumbnail: "https://i.ibb.co/wHc62Mr/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "cool chlgne level ok;'buy guys (ID: 151201786)",
+                precision: 0,
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "16", date: "2026-25-10", videoUrl: "-"},
+                ]
+            },
+                       {
+                rank: 11,
+                title: "Unstoppable",
+                publisher: "Dylan456",
+                subtitle: "Harder",
+                thumbnail: "https://i.ibb.co/gMdCR0Vn/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "The ultimate layout project of Dylan456 (now AnderNewZealand) in the early 2019-2020 era. Has gained over 165 likes since publication on the Geometry Dash servers. (ID: 57864888)",
+                precision: 0,
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "24", videoUrl: "-"},
+                ]
+            },
+                       {
+                rank: 12,
+                title: "Dylan Madness",
+                publisher: "Dylan456",
+                subtitle: "Normal",
+                thumbnail: "https://i.ibb.co/VpBCnqCj/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "A simple remake of Stereo Madness by Dylan456 in 2019. (ID: 150917467)",
+                precision: 0,
+                records: [
+                    { player: "AnderNewZealand", progress: "100%", attempts: "1", videoUrl: "-"},
+                    { player: "LILYFLOW3R", progress: "100%", attempts: "?", videoUrl: "-"},       
+                    { player: "Vaetek", progress: "100%", attempts: "1", videoUrl: "-"},              
+                    { player: "lumas10x", progress: "100%", attempts: "47", videoUrl: "-"},                 
+                ]
+            }
+        ];
+
+        const unbeatenLevels = [
+            {
+                rank: 1,
+                title: "Noisy Acropolis",
+                publisher: "Zobros",
+                subtitle: "Impossible Extreme Demon / Top 50",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Silent Acropolis remake designed to grind runs on. An inconcievable difficulty for our friend group. (ID: 147408913)",
+                precision: 197.96,
+                frameTimings: {
+                    "1": 0,
+                    "2": 1,
+                    "3": 7,
+                    "4": 19,
+                    "5_6": 32,
+                    "7_8": 12,
+                    "9_10": 13,
+                    "11_12": 13
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "5%, 67-77%"},
+                ]
+            },
+            {
+                rank: 2,
+                title: "Unnerfed Purgatory",
+                publisher: "Dylan456",
+                subtitle: "Impossible Extreme Demon / Top 100",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Impossible level created by Dylan456 when Slaughterhouse was top 1. Semi-difficult gameplay with ridiculous alignment-based timings in the middle section and tight straight fly. Made on 60Hz without hitboxes. In this unnerfed state, Purgatory was easily Top 10 at the time of creation. (ID: 68883274)",
+                records: [
+                    { player: "AnderNewZealand", progress: "46%, 82-100%"},
+                ]
+            },
+            {
+                rank: 3,
+                title: "supercali possibiles",
+                publisher: "Dylan456",
+                subtitle: "Impossible Extreme Demon / Top 150",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "A seemingly regular challenge level with a random birrage of frame-perfect wave and alt spam near the beginning, and extremely difficult wave + ship straight fly at the end. (ID: 77597160)",
+                records: [
+                    { player: "AnderNewZealand", progress: "12%"},
+                ]
+            },
+            {
+                rank: 4,
+                title: "Medium Aeternus",
+                publisher: "Riot and more",
+                subtitle: "Upper Hard Extreme Demon",
+                thumbnail: "https://i.ibb.co/JRf1YZHM/med5runs.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Easy Aeternus buffed to my absolute skill limit. The end of a long-forgotten legacy, thought impossible to reach. Projected to be Top 200 by verification. (ID: 139388097)",
+                precision: 190.66,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 0,
+                    "4": 10,
+                    "5_6": 22,
+                    "7_8": 31,
+                    "9_10": 33,
+                    "11_12": 19
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "32%, 35-82%"},
+                ]
+            },
+            {
+                rank: 5,
+                title: "SILENT CRANZAL",
+                publisher: "Dylan456",
+                subtitle: "Upper Hard Extreme Demon",
+                thumbnail: "https://i.ibb.co/xtYX7FkR/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "The superbuffed version of Dylan456's masterpiece, CRANZAL. Intended to be impossible at the time of its creation, but not human-limit. Extremely beginning-carried. (ID: 151203247)",
+                precision: 150.94,
+                frameTimings: {
+                    "1": 0,
+                    "2": 2,
+                    "3": 1,
+                    "4": 3,
+                    "5_6": 12,
+                    "7_8": 50,
+                    "9_10": 16,
+                    "11_12": 23
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "17%"},
+                ]
+            },
+            {
+                rank: 6,
+                title: "Easy Exasperation",
+                publisher: "Thycket",
+                subtitle: "Hard Extreme Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "An incredibly middle-heavy and nerve carried level with inconsistent difficulty and heavy chokepoints. An unfavourable level to play, but definitely possible with enough dedication. (ID: -)",
+                precision: 198.84,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 1,
+                    "4": 0,
+                    "5_6": 5,
+                    "7_8": 12,
+                    "9_10": 20,
+                    "11_12": 36
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "15%, 76-100%"},
+                ]
+            },
+            {
+                rank: 7,
+                title: "Easy Acheron",
+                publisher: "Ryamu and more",
+                subtitle: "Medium - Hard Extreme Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Acheron nerfed to an upper Extreme Demon by FishReign. (ID: -)",
+                records: [
+                    { player: "FishReign", progress: "20%, 84-100%"},
+                ]
+            },
+            {
+                rank: 8,
+                title: "Kocmoc Leashed",
+                publisher: "CherryTeam",
+                subtitle: "Medium Extreme Demon",
+                thumbnail: "https://i.ibb.co/9mj2JKP7/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Kocmoc Unleashed nerfed to Extreme Demon by AnderNewZealand. Tight wave sections that grow consistent with time. Despite numerous buffs, this level remains very fun. (ID: 145728835)",
+                precision: 134.67,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 0,
+                    "4": 2,
+                    "5_6": 4,
+                    "7_8": 25,
+                    "9_10": 46,
+                    "11_12": 51
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "37%, 15-63%"},
+                ]
+            },
+            {
+                rank: 9,
+                title: "Spidercide",
+                publisher: "AnderNewZealand",
+                subtitle: "Medium Extreme Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Experimental slow-speed extreme demon layout made by AnderNewZealand. First finished layout in over 3 years. Originally intended to be verified by AnderNewZealand but dropped. (ID: -)",
+                precision: 134.67,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 1,
+                    "4": 2,
+                    "5_6": 6,
+                    "7_8": 14,
+                    "9_10": 26,
+                    "11_12": 22
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "26%, 67-97%"},
+                ]
+            },
+            {
+                rank: 10,
+                title: "Zackari Von Trials",
+                publisher: "AnderNewZealand",
+                subtitle: "Easy - Medium Extreme Demon",
+                thumbnail: "https://i.ibb.co/8Djdf00G/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "A timing-heavy sync challenge jokingly named after Mr. Phillips. Plays very satisfying. (ID: 151101244)",
+                precision: 117.96,
+                frameTimings: {
+                    "1": 0,
+                    "2": 0,
+                    "3": 2,
+                    "4": 6,
+                    "5_6": 22,
+                    "7_8": 5,
+                    "9_10": 2,
+                    "11_12": 1
+                },
+                records: [
+                    { player: "AnderNewZealand", progress: "25%, 21-72%"},
+                ]
+            },
+            {
+                rank: 11,
+                title: "Life Factory",
+                publisher: "nSolar",
+                subtitle: "Easy - Medium Extreme Demon",
+                thumbnail: "https://i.ibb.co/8Djdf00G/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Nerfed version of an unforgiving wave challenge (ID: -)",
+                records: [
+                    { player: "AnderNewZealand", progress: "14%, 79-100%"},
+                ]
+            },
+            {
+                rank: 12,
+                title: "TT Goes Sicko Mode",
+                publisher: "Dylan456",
+                subtitle: "Easy Extreme Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Final verion of a ridiculous timing and straightfly-heavy challenge level. The original was created in 2022 as an impossible level, named after Tea and his stock image. (ID: -)",
+                records: [
+                    { player: "AnderNewZealand", progress: "40%, 40-100%"},
+                ]
+            },
+            {
+                rank: 13,
+                title: "Silent Spider",
+                publisher: "Dylan456",
+                subtitle: "Easy Extreme Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Nerfed version of an impossible level from 2021 under the same name. Infamous for its build towards 'hell mode' and unforgiving, unconventional gameplay. (ID: -)",
+                records: [
+                    { player: "AnderNewZealand", progress: "69%"},
+                ]
+            },
+            {
+                rank: 14,
+                title: "Easytaurus",
+                publisher: "Riot and more",
+                subtitle: "Insane - Easy Extreme Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "An accessible, nerfed version of Tartarus by FishReign. Originally a rival to Easy Aeternus, though went unverified. (ID: -)",
+                records: [
+                    { player: "FishReign", progress: "49%"},
+                    { player: "NotAkoro", progress: "44%, 57-100%"},
+                ]
+            },
+            {
+                rank: 15,
+                title: "Miami Hotline",
+                publisher: "Dylan456",
+                subtitle: "Hard Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "Iconic early level by Dylan456, considered a level of difficulty far too high at the time of its creation. Final in a series of 3 difficult levels. (ID: 57810663)",
+                records: [
+                    { player: "AnderNewZealand", progress: "78%"},
+                ]
+            },
+            {
+                rank: 16,
+                title: "The Demonator",
+                publisher: "Dylan456",
+                subtitle: "Medium - Hard Demon",
+                thumbnail: "g",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "The first in a series of 3 difficult levels by Dylan456, and one of his first published levels. Far beyond difficult in terms of verification for its time. (ID: 48629944)",
+                records: [
+                    { player: "AnderNewZealand", progress: "50%"},
+                ]
+            },
+            {
+                rank: 17,
+                title: "blah blah",
+                publisher: "LILYFLOW3R",
+                subtitle: "Medium Demon",
+                thumbnail: "https://i.ibb.co/SXc2q6qP/image.png",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "DUNG DUNG SAHUR. add the description that feels right to you. (ID: 151206155)",
+                records: [
+                    { player: "AnderNewZealand", progress: "30%"},
+                ]
+            },
+            {
+                rank: 18,
+                title: "Geometry Demons",
+                publisher: "Dylan456",
+                subtitle: "Medium Demon",
+                thumbnail: "",
+                youtubeId: "dQw4w9WgXcQ",
+                description: "The second in a series of 3 difficult levels made by Dylan456, superseded by Miami Hotline. Good Luck :) (ID: 57693588)",
+                records: [
+                    { player: "AnderNewZealand", progress: "68%, 40-100%"},
+                ]
+            }
+        ];
+
+        let currentTab = 'beaten';
+        let currentActiveLevel = null;
+
+        // Render levels on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderLevels();
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const btnBeaten = document.getElementById('tab-beaten');
+            const btnUnbeaten = document.getElementById('tab-unbeaten');
+
+            if (tab === 'beaten') {
+                btnBeaten.className = "flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md shadow-rose-900/30";
+                btnUnbeaten.className = "flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60";
+            } else {
+                btnUnbeaten.className = "flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/30";
+                btnBeaten.className = "flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60";
+            }
+
+            document.getElementById('searchInput').value = '';
+            renderLevels();
+        }
+
+        function getActiveData() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const data = currentTab === 'beaten' ? beatenLevels : unbeatenLevels;
+            
+            if (!query) return data;
+
+            return data.filter(item => 
+                item.title.toLowerCase().includes(query) || 
+                item.publisher.toLowerCase().includes(query)
+            );
+        }
+
+        function renderLevels() {
+            const container = document.getElementById('levelsList');
+            const emptyState = document.getElementById('emptyState');
+            const countLabel = document.getElementById('levelCount');
+            const data = getActiveData();
+
+            countLabel.textContent = `Showing ${data.length} level${data.length === 1 ? '' : 's'}`;
+
+            if (data.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = data.map(level => `
+                <div onclick="openModal('${currentTab}', ${level.rank})" 
+                     class="group bg-slate-900/80 hover:bg-slate-900 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-2xl flex flex-col sm:flex-row gap-5 items-center">
+                    
+                    <!-- Thumbnail Image -->
+                    <div class="relative w-full sm:w-56 h-32 sm:h-32 rounded-xl overflow-hidden bg-slate-950 flex-shrink-0 border border-slate-800/80">
+                        <img src="${level.thumbnail}" alt="${level.title}" onerror="this.src='https://placehold.co/600x400/0f172a/cbd5e1?text=Level+Thumbnail'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+                            <span class="text-xs font-medium text-white bg-slate-900/80 backdrop-blur px-2 py-1 rounded-md flex items-center gap-1.5">
+                                <i class="fa-solid fa-play text-[10px] text-rose-500"></i> View Details
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="flex-1 w-full text-center sm:text-left">
+                        <h2 class="display-font text-xl sm:text-2xl font-bold text-slate-100 group-hover:text-rose-400 transition-colors">
+                            #${level.rank} — ${level.title}
+                        </h2>
+                        <p class="text-sm text-slate-400 mt-1">
+                            original level by <span class="text-slate-200 underline decoration-slate-700 underline-offset-2 font-medium">${level.publisher}</span>
+                        </p>
+                        <p class="text-xs text-slate-500 mt-2 font-mono">
+                            ${level.subtitle}
+                        </p>
+                    </div>
+
+                    <!-- Arrow Indicator -->
+                    <div class="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800/50 group-hover:bg-rose-600/20 text-slate-500 group-hover:text-rose-400 transition-colors">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterLevels() {
+            renderLevels();
+        }
+
+        function openModal(tab, rank) {
+            const data = tab === 'beaten' ? beatenLevels : unbeatenLevels;
+            const level = data.find(l => l.rank === rank);
+            if (!level) return;
+
+            currentActiveLevel = level;
+
+            document.getElementById('modalRank').textContent = `#${level.rank}`;
+            document.getElementById('modalTitle').textContent = level.title;
+            document.getElementById('publisherText').textContent = level.publisher;
+            document.getElementById('pointsText').textContent = level.subtitle;
+            document.getElementById('modalDescription').textContent = level.description;
+
+            // Setup YouTube embed URL
+            const ytEmbedUrl = `https://www.youtube.com/embed/${level.youtubeId}?autoplay=0`;
+            document.getElementById('modalYoutube').src = ytEmbedUrl;
+
+            // Handle Frame Timings Section visibility and population
+            const frameTimingsSection = document.getElementById('frameTimingsSection');
+            if (level.frameTimings && Object.keys(level.frameTimings).length > 0) {
+                frameTimingsSection.style.display = 'block';
+                renderFrameTimings(level.frameTimings, level.precision);
+            } else {
+                frameTimingsSection.style.display = 'none';
+            }
+
+            // Render Victors / Leaderboard
+            renderLeaderboard(level.records);
+
+            // Show modal with animation
+            const modal = document.getElementById('levelModal');
+            const container = document.getElementById('modalContainer');
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-95');
+            container.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function renderFrameTimings(timings, precision) {
+            const categories = ["1", "2", "3", "4", "5_6", "7_8", "9_10", "11_12"];
+
+            categories.forEach(cat => {
+                const count = (timings && timings[cat]) ? timings[cat] : 0;
+                const el = document.getElementById(`f-${cat}`);
+                if (el) {
+                    el.textContent = count;
+                }
+            });
+
+            document.getElementById('precisionValue').textContent = `Precision: ${precision !== undefined ? precision : 0}`;
+        }
+
+        function renderLeaderboard(records) {
+            const tbody = document.getElementById('victorTableBody');
+            if (!records || records.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-slate-500 text-xs italic">
+                            No victors or progress records listed yet.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = records.map((rec, index) => {
+                const is100 = rec.progress === '100%';
+                const badgeClass = index === 0 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                                   index === 1 ? 'bg-slate-400/20 text-slate-300 border-slate-400/30' :
+                                   index === 2 ? 'bg-amber-700/20 text-amber-600 border-amber-700/30' : 'bg-slate-800 text-slate-400 border-slate-700';
+
+                return `
+                    <!-- VICTOR ROW TEMPLATE -->
+                    <tr class="hover:bg-slate-900/60 transition-colors">
+                        <td class="py-3 px-3">
+                            <span class="w-5 h-5 rounded font-bold text-[10px] inline-flex items-center justify-center border ${badgeClass}">
+                                ${index + 1}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 font-semibold text-slate-200">
+                            ${rec.player}
+                        </td>
+                        <td class="py-3 px-3">
+                            <span class="font-mono font-semibold ${is100 ? 'text-emerald-400' : 'text-indigo-400'}">
+                                ${rec.progress}
+                            </span>
+                            ${rec.attempts ? `<span class="text-[10px] text-slate-500 block font-normal">${rec.attempts}</span>` : ''}
+                        </td>
+                        <td class="py-3 px-3 text-slate-400 text-[11px]">
+                            ${rec.date || 'N/A'}
+                        </td>
+                        <td class="py-3 px-3 text-right">
+                            ${rec.videoUrl ? `
+                                <a href="${rec.videoUrl}" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 hover:underline">
+                                    <i class="fa-solid fa-video text-[10px]"></i> Proof
+                                </a>
+                            ` : `<span class="text-slate-600 text-[11px]">None</span>`}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('levelModal');
+            const container = document.getElementById('modalContainer');
+            
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+            document.body.style.overflow = 'auto';
+
+            // Stop YouTube video playback on close
+            document.getElementById('modalYoutube').src = '';
+            currentActiveLevel = null;
+        }
+
+        // Close modal on outside click
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('levelModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Close modal on ESC key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
